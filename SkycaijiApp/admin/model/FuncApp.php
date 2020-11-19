@@ -17,11 +17,11 @@ class FuncApp extends BaseModel{
 	public $funcModules=array(
 		'process'=>array (
 			'name'=>'数据处理',
-			'loc'=>'数据处理》使用函数'
+			'loc'=>'数据处理»使用函数'
 		),
 		'processIf'=>array(
 			'name'=>'条件判断',
-			'loc'=>'数据处理》条件判断》使用函数'
+			'loc'=>'数据处理»条件判断»使用函数'
 		)
 	);
 	public function __construct($data = []){
@@ -79,7 +79,28 @@ class FuncApp extends BaseModel{
 			return false;
 		}
 		$func['module']=$this->format_module($func['module']);
+		if(!$this->right_module($func['module'])){
+			return false;
+		}
+		
 		$func['uptime']=$func['uptime']>0?$func['uptime']:time();
+		
+		if(!preg_match('/^([A-Z][a-z0-9]*){2}$/',$func['app'])){
+			
+			return false;
+		}
+		
+		$codeFmt=strip_phpcode_comment($code);
+		
+		if(!preg_match('/^\s*namespace\s+plugin\\\func\b/im',$codeFmt)){
+			
+			return false;
+		}
+		if(!preg_match('/class\s+'.$func['app'].'\b/i',$codeFmt)){
+			
+			return false;
+		}
+		
 		$funcData=$this->where('app',$func['app'])->find();
 		$success=false;
 		
@@ -129,11 +150,17 @@ class FuncApp extends BaseModel{
 				$methods=array();
 				if(!empty($reMethods)){
 					foreach ($reMethods as $reMethod){
+						$methodName=$reMethod->name;
+						if(empty($methodName)||strpos($methodName,'__')===0){
+							
+							continue;
+						}
+						
 						$comment=$reMethod->getDocComment();
 						$comment=preg_replace('/^[\/\*\s]+/m', '', $comment);
 						$comment=trim($comment);
 						
-						$methods[$reMethod->name]=array('comment'=>$comment);
+						$methods[$methodName]=array('comment'=>$comment);
 					}
 				}
 				return array (

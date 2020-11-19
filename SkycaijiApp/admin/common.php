@@ -86,7 +86,7 @@ function is_collecting(){
 		return false;
 	}
 }
-/*移除自动采集》正在采集状态*/
+/*移除自动采集»正在采集状态*/
 function remove_auto_collecting(){
 	\skycaiji\admin\model\CacheModel::getInstance()->db()->where('cname','auto_collecting')->delete();
 }
@@ -178,4 +178,28 @@ function array_filter_keep0($list){
 		}
 	}
 	return $list;
+}
+
+function strip_phpcode_comment($code){
+	if($code){
+		$tokens=token_get_all($code);
+		$newCode='';
+		foreach ($tokens as $key=>$token){
+			if (!is_array($token)){
+				$newCode.=$token;
+			}else{
+				
+				if($token[0]==T_COMMENT||$token[0]==T_DOC_COMMENT){
+					if(preg_match('/[\r\n]+$/', $token[1])){
+						
+						$newCode.=PHP_EOL;
+					}
+				}else{
+					$newCode.=$token[1];
+				}
+			}
+		}
+		$code=$newCode;
+	}
+	return $code;
 }

@@ -27,7 +27,7 @@
 			{if empty($taskList)}
 				<tr>
 					<td colspan="8" style="text-align:center;">
-						<p class="help-block">没有任务，创建<a href="{:url('Task/add')}">新任务</a>或进入<a href="{:url('Store/index')}">云平台</a>下载规则</p>
+						<p class="help-block">没有任务，创建<a href="{:url('Task/add')}">新任务</a>或进入<a href="{:url('Mystore/store')}">云平台</a>下载规则</p>
 					</td>
 				</tr>
 			{else/}
@@ -37,7 +37,7 @@
 	                <td><a href="{:url('Task/edit?id='.$item['id'])}">{$item['name']}</a></td>
 	                <td><a href="{:url('Task/list?show=list&tg_id='.$item['tg_id'])}">{$tgList[$item['tg_id']]?$tgList[$item['tg_id']]:lang($item['tg_id']?'deleted':'none')}</a></td>
 	                <td>{:lang('task_module_'.$item['module'])}</td>
-	                <td><a href="javascript:;" class="auto" item-id="{$item['id']}" style="color:{$item['auto']?'green':'red'}">{:lang($item['auto']?'yes':'no')}</a></td>
+	                <td><a href="javascript:;" class="auto" data-val={$item['auto']?1:0} item-id="{$item['id']}" style="color:{$item['auto']?'green':'red'}">{:lang($item['auto']?'yes':'no')}</a></td>
 	                <td>{$item['addtime']|date='Y-m-d',###}</td>
 	                <td>
 	                	<label class="checkbox-inline">

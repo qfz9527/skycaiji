@@ -23,6 +23,8 @@ class Setting extends BaseController {
     		$config['closelog']=input('closelog/d',0);
     		$config['dblong']=input('dblong/d',0);
     		$config['login']=input('login/a');
+    		$config['closetrans']=input('closetrans/d',0);
+    		
     		if($config['login']['limit']){
     			
     			if(empty($config['login']['failed'])){
@@ -137,7 +139,7 @@ class Setting extends BaseController {
 			if($config['img_name']=='custom'){
 				
 				if(empty($config['name_custom_path'])){
-					$this->error('请输入图片名称自定义目录');
+					$this->error('请输入图片名称自定义路径');
 				}
 				if(!$checkNamePath['success']){
 					$this->error($checkNamePath['msg']);
@@ -147,6 +149,19 @@ class Setting extends BaseController {
 				if(!$checkNamePath['success']){
 					$config['name_custom_path']='';
 				}
+			}
+			
+			$checkNameName=$mconfig->check_img_name_name($config['name_custom_name']);
+			if($config['img_name']=='custom'){
+			    
+			    if(!empty($config['name_custom_name'])&&!$checkNameName['success']){
+			        $this->error($checkNameName['msg']);
+			    }
+			}else{
+			    
+			    if(!$checkNameName['success']){
+			        $config['name_custom_name']='';
+			    }
 			}
 			
 			$mconfig->setConfig('download_img',$config);
@@ -265,6 +280,8 @@ class Setting extends BaseController {
     		$config=array();
     		$config['open']=input('open/d',0);
     		$config['api']=input('api','','strtolower');
+    		$config['interval']=input('interval/d',0);
+    		
     		foreach ($apiTypes as $v){
     			$config[$v]=input($v.'/a',null,'trim');
     		}

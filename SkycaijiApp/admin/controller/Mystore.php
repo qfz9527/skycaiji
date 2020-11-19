@@ -14,7 +14,39 @@ namespace skycaiji\admin\controller;
 use skycaiji\admin\model\FuncApp;
 class Mystore extends BaseController {
 	public function indexAction(){
-    	$this->redirect('Mystore/rule');
+    	$this->redirect('Mystore/store');
+	}
+	public function storeAction(){
+	    $url=input('url','','strip_tags');
+	    if(!empty($url)&&!is_official_url($url)){
+	        
+	        $provData=model('Provider')->where('url',$url)->find();
+	        if(empty($provData)){
+	            $this->error($url.' 平台未添加');
+	        }
+	        if(empty($provData['enable'])){
+	            $this->error($url.' 已设置为拒绝访问');
+	        }
+	        $url=$provData['url'];
+	        
+	        $url.=strpos($url, '?')===false?'?':'&';
+	        $url.='clientinfo='.urlencode($GLOBALS['_sc']['clientinfo']);
+	        
+	        $this->assign('provData',$provData);
+	    }
+	    if(empty($url)){
+	        $url='https://www.skycaiji.com/store';
+	    }
+	    
+	    if(!empty($url)){
+	        
+	    }
+	    
+	    $GLOBALS['_sc']['p_name']=lang('store');
+	    $GLOBALS['_sc']['p_nav']=breadcrumb(array(array('url'=>url('Mystore/store'),'title'=>lang('store'))));
+	    
+	    $this->assign('url',$url);
+	    return $this->fetch();
 	}
 	public function ruleAction(){
 		$mrule=model('Rule');
@@ -223,13 +255,15 @@ class Mystore extends BaseController {
 		$mapp=model('ReleaseApp');
 		if($op=='delete'){
 			
-			$mapp->where(array('id'=>$id))->delete();
+			$this->_deleteReleaseApp($id);
 			$this->success(lang('delete_success'));
 		}elseif($op=='deleteall'){
 			
 			$ids=input('ids/a');
 			if(is_array($ids)&&count($ids)>0){
-				$mapp->where(array('id'=>array('in',$ids)))->delete();
+				foreach ($ids as $idv){
+					$this->_deleteReleaseApp($idv);
+				}
 			}
     		$this->success(lang('op_success'),'Mystore/ReleaseApp');
 		}elseif($op=='auto_check'){
@@ -245,6 +279,27 @@ class Mystore extends BaseController {
 				$this->success('',null,$updateList);
 			}else{
 				$this->error();
+			}
+		}
+	}
+	
+	protected function _deleteReleaseApp($id){
+		if($id>0){
+			$mapp=model('ReleaseApp');
+			$pluginPath=config('plugin_path').'/release';
+			$appData=$mapp->where('id',$id)->find();
+			if(!empty($appData)){
+				$appFile=$pluginPath.'/'.strtolower($appData['module']).'/'.ucfirst($appData['app']).'.php';
+				$appTpl=$pluginPath.'/view/'.strtolower($appData['module']).'/'.ucfirst($appData['app']).'.html';
+				if(file_exists($appFile)){
+					
+					unlink($appFile);
+				}
+				if(file_exists($appTpl)){
+					
+					unlink($appTpl);
+				}
+				$mapp->where('id',$id)->delete();
 			}
 		}
 	}
@@ -501,7 +556,19 @@ class Mystore extends BaseController {
 			
 			$ids=input('ids/a');
 			if(is_array($ids)&&count($ids)>0){
-				$mfuncApp->where(array('id'=>array('in',$ids)))->delete();
+				
+				foreach ($ids as $idv){
+					$vAppData=$mfuncApp->where('id',$idv)->find();
+					if(!empty($vAppData)){
+						if(!empty($vAppData['module'])&&!empty($vAppData['app'])){
+							$filename=$mfuncApp->filename($vAppData['module'], $vAppData['app']);
+							if(file_exists($filename)){
+								unlink($filename);
+							}
+						}
+						$mfuncApp->where('id',$vAppData['id'])->delete();
+					}
+				}
 			}
     		$this->success(lang('op_success'),'Mystore/funcApp');
 		}elseif($op=='auto_check'){
@@ -518,6 +585,62 @@ class Mystore extends BaseController {
 			}else{
 				$this->error();
 			}
+		}
+	}
+	/*导入插件*/
+	public function uploadAction(){
+		if(request()->isPost()){
+			if(!check_usertoken()){
+				$this->error(lang('usertoken_error'));
+			}
+			if($GLOBALS['_sc']['c']['site']['verifycode']){
+				
+				$verifycode=trim(input('verifycode'));
+				$check=check_verify($verifycode);
+				if(!$check['success']){
+					$this->error($check['msg']);
+				}
+			}
+			$file=$_FILES['plugin_file'];
+			if(empty($file)||empty($file['tmp_name'])){
+				$this->error('请选择插件文件');
+			}
+			$fileTxt=file_get_contents($file['tmp_name']);
+			$pluginData=null;
+    		if(preg_match('/\/\*skycaiji-plugin-start\*\/(?P<plugin>[\s\S]+?)\/\*skycaiji-plugin-end\*\//i',$fileTxt,$pluginMatch)){
+    			$pluginData=unserialize(base64_decode(trim($pluginMatch['plugin'])));
+			}
+			if(empty($pluginData)){
+				$this->error('不是插件文件');
+			}
+			$mapp=null;
+			if($pluginData['type']=='release'){
+				$mapp=model('ReleaseApp');
+			}elseif($pluginData['type']=='func'){
+				$mapp=model('FuncApp');
+			}else{
+				$this->error('分类错误');
+			}
+			
+			if(!input('replace')){
+				
+				$pluginDb=$mapp->where('app',$pluginData['app'])->find();
+				if(!empty($pluginDb)){
+					
+					$this->error('插件已存在',null,array('js'=>"confirmRight('插件已存在，是否替换？',win_submit_replace)"));
+				}
+			}
+			
+			$result=controller('admin/Store')->_installPlugin($pluginData);
+			
+			if($result['success']){
+				$this->success('成功导入插件：'.$pluginData['app'],'Mystore/'.$pluginData['type'].'App');
+			}else{
+				$this->error($result['msg']);
+			}
+			
+		}else{
+			return $this->fetch();
 		}
 	}
 	/*插件设置自动检测*/

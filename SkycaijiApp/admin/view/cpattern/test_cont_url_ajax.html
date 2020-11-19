@@ -12,13 +12,13 @@
 	<div class="form-group">
 	  	<div class="input-group">
 	  		<div class="input-group-btn">
-		    	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><em style="font-style:normal">抓取字段</em> <span class="caret"></span></button>
+		    	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><em class="test-tips" style="font-style:normal">抓取字段</em> <span class="caret"></span></button>
 		        <ul class="dropdown-menu">
-		        	<li><a href="javascript:;" data-test="get_fields">抓取字段</a></li>
-		        	<li><a href="javascript:;" data-test="get_html">抓取源码</a></li>
-		        	<li><a href="javascript:;" data-test="elements">分析网页</a></li>
-		        	<li><a href="javascript:;" data-test="get_paging_urls">抓取分页</a></li>
-		        	<li><a href="javascript:;" data-test="get_relation_urls">抓取关联页</a></li>
+		        	<li><a href="javascript:;" data-test="get_fields" data-title="抓取字段">抓取字段</a></li>
+		        	<li><a href="javascript:;" data-test="get_html" data-title="抓取源码">抓取源码</a></li>
+		        	<li><a href="javascript:;" data-test="elements" data-title="分析网页">分析网页</a></li>
+		        	<li><a href="javascript:;" data-test="get_paging_urls" data-title="抓取分页">抓取分页</a></li>
+		        	<li><a href="javascript:;" data-test="get_relation_urls" data-title="抓取关联页">抓取关联页</a></li>
 		        </ul>
 		    </div>
 	  		{if condition="!empty($url_post)"}
@@ -32,26 +32,26 @@
   	{if condition="!empty($input_urls)"}
   	<div id="win_get_fields_input">
   		<div class="panel panel-default">
-  			<div class="panel-heading">有字段绑定了以下数据源，请输入网址</div>
+  			<div class="panel-heading">有字段需要从以下数据源抓取页面，请输入网址</div>
   			<div class="panel-body">
-		  			{if condition="isset($input_urls['source_url'])"}
+		  		{if condition="isset($input_urls['source_url'])"}
 			  	<div class="form-group">
 				  	<div class="input-group">
 				  		<div class="input-group-addon">起始页</div>
 						<input type="text" name="source_url" class="form-control" value="{$input_urls['source_url']}" />
 					</div>
 				</div>
-					{/if}
-					{if condition="is_array($input_urls['level_url'])"}
-						{foreach $input_urls['level_url'] as $level_url}
-			  	<div class="form-group">
-					<div class="input-group">
-						<div class="input-group-addon">多级页：{$level_url['name']}</div>
-						<input type="text" name="level_{$level_url['level']}" class="form-control" value="{$level_url['url']}" />
-					</div>	
-				</div>
-						{/foreach}
-					{/if}
+				{/if}
+				{if condition="is_array($input_urls['level_url'])"}
+					{foreach $input_urls['level_url'] as $level_url}
+				  	<div class="form-group">
+						<div class="input-group">
+							<div class="input-group-addon">多级页：{$level_url['name']}</div>
+							<input type="text" name="level_{$level_url['level']}" class="form-control" value="{$level_url['url']}" />
+						</div>	
+					</div>
+					{/foreach}
+				{/if}
 			</div>
   		</div>
   	</div>
@@ -65,22 +65,27 @@
 'use strict';//严格模式
 //预览
 function win_test_view(id){
-	$('#ifm_test_view').remove();//删除旧的
-	var html=$('#'+id).val();
-	html=html.replace(/<script[^<>]*>[\s\S]*?<\/script>/ig,'');//去掉脚本代码
-	html=html.replace(/<meta[^<>]*charset[^<>]*>/i,'');//去掉编码
-	var ifm='<iframe id="ifm_test_view" style="width:100%;border:1px solid #ccc;"></iframe>';
-	$('#'+id).after(ifm);
-	$('#ifm_test_view').bind('load',function(){
-		if($("#ifm_test_view").contents().find('body').html().length<=0){
-			//火狐浏览器需要重新赋值
-		    $("#ifm_test_view").contents().find('body').html(html);
-		}
-		var iframeObj = document.getElementById('ifm_test_view');
-		var height=(iframeObj.Document?iframeObj.Document.body.scrollHeight:iframeObj.contentDocument.body.offsetHeight);
-		$('#ifm_test_view').attr('height',height+'px');
-	});
-    $("#ifm_test_view").contents().find('body').html(html);
+	if($('#'+id).next().attr('id')=='ifm_test_view'){
+		//折叠
+		$('#ifm_test_view').remove();
+	}else{
+		$('#ifm_test_view').remove();//删除旧的
+		var html=$('#'+id).val();
+		html=html.replace(/<script[^<>]*>[\s\S]*?<\/script>/ig,'');//去掉脚本代码
+		html=html.replace(/<meta[^<>]*charset[^<>]*>/i,'');//去掉编码
+		var ifm='<iframe id="ifm_test_view" style="width:100%;border:1px solid #ccc;"></iframe>';
+		$('#'+id).after(ifm);
+		$('#ifm_test_view').bind('load',function(){
+			if($("#ifm_test_view").contents().find('body').html().length<=0){
+				//火狐浏览器需要重新赋值
+			    $("#ifm_test_view").contents().find('body').html(html);
+			}
+			var iframeObj = document.getElementById('ifm_test_view');
+			var height=(iframeObj.Document?iframeObj.Document.body.scrollHeight:iframeObj.contentDocument.body.offsetHeight);
+			$('#ifm_test_view').attr('height',height+'px');
+		});
+	    $("#ifm_test_view").contents().find('body').html(html);
+	}
 }
 
 //分析网页
@@ -94,7 +99,7 @@ function test_elements(id){
 $('#win_test_cont_url .dropdown-menu a[data-test]').bind('click',function(){
 	var btnObj=$(this).parents('.dropdown-menu').eq(0).siblings('button.dropdown-toggle').eq(0);
 	btnObj.attr('data-test',$(this).attr('data-test'));
-	btnObj.find('em').eq(0).text($(this).text());
+	btnObj.find('.test-tips').text($(this).attr('data-title'));
 	if($(this).attr('data-test')=='get_fields'){
 		//显示输入数据源网址
 		$('#win_get_fields_input').show();
@@ -155,9 +160,32 @@ $('#win_test_cont_url button.test-sub').bind('click',function(){
 			});
 		}else{
 			if(testOp=='get_fields'){
+				//附加数据源网址
 				$('#win_get_fields_input').find('input').each(function(){
-					//附加数据源网址
 					url+='&'+$(this).attr('name')+'='+encodeURIComponent($(this).val());
+				});
+				//表格标题左右拉伸
+				window.win_test_table_thead_mousedown=null;//点击初始
+				var thEle='.table-test-loop thead th';
+				$('#win_test_cont_url').off('mousedown',thEle).on('mousedown',thEle,function(e){
+					$(this).css('background','#f1f1f1');
+					window.win_test_table_thead_mousedown={
+						table_width:$('#win_test_cont_url .table-test-loop').width(),
+						th_width:$(this).width(),
+						page_x:e.pageX
+					};
+					$(this).off('mousemove').bind('mousemove',function(e){
+						var def=window.win_test_table_thead_mousedown;
+						if(def){
+							var moveWidth=e.pageX-def.page_x;
+							$("#win_test_cont_url .table-test-loop").width(def.table_width+moveWidth);
+							$(this).width(def.th_width+moveWidth);
+						}
+					});
+					$(this).off('mouseout mouseup').bind('mouseout mouseup',function(e){
+						$(this).css('background','');
+						window.win_test_table_thead_mousedown=null;//结束
+					});
 				});
 			}
 			$.ajax({
@@ -211,6 +239,7 @@ $('#win_test_cont_url button.test-sub').bind('click',function(){
 										//检测到html代码
 										browse='<a href="javascript:;" onclick="win_test_view(\''+eleId+'\')">预览</a>';
 									}
+									vals[f]=vals[f].replace(/\</g,'&lt;').replace(/\>/g,'&gt;');//编码
 									html+='<label>'+f+'：</label>'+browse+'<textarea id="'+eleId+'" class="form-control">'+vals[f]+'</textarea><br>';
 								}
 							}
